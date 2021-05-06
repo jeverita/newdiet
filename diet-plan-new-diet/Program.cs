@@ -11,15 +11,26 @@ namespace DietTrackor
 {
     class Program
     {
+        
+
         static void Main(string[] args)
         {
+
+            bool exist = false;
+
+
             string connString = "server=localhost;port=3306;database=dietplan;user=newuser;password=password";
             MySqlConnection conn = new MySqlConnection(connString);
             conn.Open();
 
             string userName; 
-            char gender;
-            int age, height, weight, workOutLevel, goalFatLoss, dietLength;
+            char gender = Convert.ToChar("F");
+            int age = 0;
+            int height = 0;
+            int weight = 0;
+            int workOutLevel = 0;
+            int goalFatLoss = 0;
+            int dietLength = 0;
             int caloriesConsumed, coffeeConsumed, caloriesBurnt;
             double BMR , caloriesMaintenance , caloriesDeficitTarget , recommendedDailyCalories;
             int currentDayCount=2, daysRemaining ;
@@ -31,30 +42,38 @@ namespace DietTrackor
 
             Console.WriteLine("Enter your name");
             userName = Console.ReadLine();
+            MySqlCommand cmd3 = new MySqlCommand(@"SELECT id FROM newuser WHERE userName = @userName", conn);
+            cmd3.Parameters.AddWithValue("@userName", userName);
+            
+            uint? id = (uint?) cmd3.ExecuteScalar();
 
-            Console.WriteLine("Enter your gender\n -Press 0 for male\n -Press 1 for female");
-            gender = Convert.ToChar(Console.ReadLine());
+            exist = id != null;
 
+             if (!exist)
+                    {
+                    Console.WriteLine("Enter your gender\n -Press M for male\n -Press F for female");
+                    gender = Convert.ToChar(Console.ReadLine());
+                    
+                    Console.WriteLine("Enter your age");
+                    age = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your age");
-            age = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter your height (cm)");
+                    height = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your height (cm)");
-            height = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter your weight (kg)");
+                    weight = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your weight (kg)");
-            weight = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter your workout level\n -Press 1 for Light/No exercise\n -Press 2 for Light exercise\n -Press 3 for Moderate exercise\n -Press 4 for very active exercise\n -Press 5 for extra active exercise");
+                    workOutLevel = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your workout level\n -Press 1 for Light/No exercise\n -Press 2 for Light exercise\n -Press 3 for Moderate exercise\n -Press 4 for very active exercise\n -Press 5 for extra active exercise");
-            workOutLevel = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter your fat loss goal (kg)");
+                    goalFatLoss = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your fat loss goal (kg)");
-            goalFatLoss = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter your diet length (days)");
 
-            Console.WriteLine("Enter your diet length (days)");
+                    dietLength = Convert.ToInt32(Console.ReadLine());
 
-            dietLength = Convert.ToInt32(Console.ReadLine());
-             MySqlCommand cmd = new MySqlCommand("INSERT INTO newUser(userName, age, gender, height, weight, workOutLevel, goalFatLoss, dietLength) VALUES(@userName, @age, @gender, @height, @weight, @workOutLevel, @goalFatLoss, @dietLength)", conn);
+            MySqlCommand cmd = new MySqlCommand("INSERT INTO newUser(userName, age, gender, height, weight, workOutLevel, goalFatLoss, dietLength, id) VALUES(@userName, @age, @gender, @height, @weight, @workOutLevel, @goalFatLoss, @dietLength, LAST_INSERT_ID())", conn);
             cmd.Parameters.AddWithValue("@userName", userName);
             cmd.Parameters.AddWithValue("@age", age);
             cmd.Parameters.AddWithValue("@gender", gender);
@@ -63,35 +82,44 @@ namespace DietTrackor
             cmd.Parameters.AddWithValue("@workOutLevel", workOutLevel);
             cmd.Parameters.AddWithValue("@goalFatLoss", goalFatLoss);
             cmd.Parameters.AddWithValue("@dietLength", dietLength);
-            cmd.ExecuteNonQuery();
-            conn.Close();
+            id = (uint?)cmd.ExecuteScalar();
+            
             
             Console.WriteLine("Success!");
 
            //If user already exists we offer these questions
 
-            do {
-            Console.WriteLine("Enter your calories consumed (kcal)");
-            caloriesConsumed = Convert.ToInt32(Console.ReadLine());
+                    }else 
+                    {
+                        do {
+                            Console.WriteLine("Enter your calories consumed (kcal)");
+                            caloriesConsumed = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your coffee doses consumed");
-            coffeeConsumed = Convert.ToInt32(Console.ReadLine());
+                            Console.WriteLine("Enter your coffee doses consumed");
+                            coffeeConsumed = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Enter your calories burnt (kcal)");
-            caloriesBurnt = Convert.ToInt32(Console.ReadLine());
+                            Console.WriteLine("Enter your calories burnt (kcal)");
+                            caloriesBurnt = Convert.ToInt32(Console.ReadLine());
 
-            MySqlCommand cmd2 = new MySqlCommand("INSERT INTO dietDays(caloriesConsumed, coffeeConsumed, caloriesBurnt) VALUES(@caloriesConsumed, @coffeeConsumed, @caloriesBurnt)", conn);
-            cmd2.Parameters.AddWithValue("@caloriesConsumed", caloriesConsumed);
-            cmd2.Parameters.AddWithValue("@coffeeConsumed", coffeeConsumed);
-            cmd2.Parameters.AddWithValue("@caloriesBurnt", caloriesBurnt);
-            cmd2.ExecuteNonQuery();
+                            MySqlCommand cmd2 = new MySqlCommand("INSERT INTO dietDays(caloriesConsumed, coffeeConsumed, caloriesBurnt, newUser_id) VALUES(@caloriesConsumed, @coffeeConsumed, @caloriesBurnt, @newUser_id)", conn);
+                            cmd2.Parameters.AddWithValue("@caloriesConsumed", caloriesConsumed);
+                            cmd2.Parameters.AddWithValue("@coffeeConsumed", coffeeConsumed);
+                            cmd2.Parameters.AddWithValue("@caloriesBurnt", caloriesBurnt);
+                            cmd2.Parameters.AddWithValue("@newUser_id", id);
 
-            conn.Close();
-            Console.WriteLine("Success!");
-            Console.Write("Do you have more data?");
-            } 
-            while (Console.ReadLine().ToLower() == "y");
+                            cmd2.ExecuteNonQuery();
 
+                            
+                            Console.WriteLine("Success!");
+                            Console.Write("Do you have more data - press 'y'");
+                            } 
+                        while (Console.ReadLine().ToLower() == "y");
+                        conn.Close(); // had to change connection closure to close the connection after the loop is done
+
+
+                    }
+             
+            
             if (gender == 'M')
             {
                 BMR = (10 * weight) + (6.25 * height) - (5 * age) + 5;
